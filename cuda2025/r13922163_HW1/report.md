@@ -1,7 +1,5 @@
 # CUDA 2025 HW1
 ## Result
-![alt text](gpu_time_vs_threads.png)
-![alt text](speedup_vs_threads.png)
 | Threads Per Block | GPU Time (ms) | CPU Time (ms) | Speedup (×) |
 | ----------------- | ------------- | ------------- | ----------- |
 | 64                | 15.200        | 143.920       | 9.44        |
@@ -9,6 +7,10 @@
 | 256               | 4.400         | 143.720       | 32.78       |
 | 512               | 2.600         | 143.240       | 55.30       |
 | 1024              | 1.600         | 143.480       | 91.34       |
+
+![alt text](gpu_time_vs_threads.png)
+
+![alt text](speedup_vs_threads.png)
 
 1. Treand Observation
 - Increasing `threadsPerBlock` (`Block Size`) improves GPU time.
