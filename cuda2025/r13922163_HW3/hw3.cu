@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAXITER 1000000
 #define T 8
 
 __global__ void poisson(float *out, const float *in, int L, int idxCenter)
@@ -32,9 +31,14 @@ __global__ void poisson(float *out, const float *in, int L, int idxCenter)
     out[idx] = newVal;
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    int const L = 16;
+    if (argc != 3) {
+        printf("Usage: %s <L> <maxiter>\n", argv[0]);
+        return 1;
+    }
+    int const L = atoi(argv[1]);
+    int const maxiter = atoi(argv[2]);
     int const Nside = L + 2;
     int const mid = L / 2 + 1;
 
@@ -52,7 +56,7 @@ int main()
     dim3 blocks((L + T - 1) / T, (L + T - 1) / T, (L + T - 1) / T);
     dim3 threads(T, T, T);
 
-    for (int iter = 0; iter < MAXITER; ++iter) {
+    for (int iter = 0; iter < maxiter; ++iter) {
         poisson<<<blocks, threads>>>(out, in, L, idxCenter); // write "out" from "in"
         std::swap(in, out);                                  // next step will read the new “in”
     }
