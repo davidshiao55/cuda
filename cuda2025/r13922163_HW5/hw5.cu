@@ -3,6 +3,7 @@
 
 __global__ void blend_kernel(float *out, const float *in, int DIM)
 {
+
     int N = DIM + 2; // physical row length (ghosts included)
     int pitchY = N;
 
@@ -13,7 +14,7 @@ __global__ void blend_kernel(float *out, const float *in, int DIM)
 
     int idx = i + j * pitchY;
 
-    // six neighbours (all legal because of ghost layer)
+    // four neighbours (all legal because of ghost layer)
     float left = in[idx - 1];
     float right = in[idx + 1];
     float back = in[idx - pitchY];
@@ -53,6 +54,9 @@ int main(int argc, char **argv)
     int const T = atoi(argv[2]);
     int const Nside = DIM + 2;
 
+    printf("maxiter = %d\n", maxiter);
+    printf("threadsPerBlock = (%d, %d)\n", T, T);
+
     size_t N = Nside * Nside; // include ghost cell to avoid branch divergence
     float *h_src = (float *)malloc(N * sizeof(float));
     for (int j = 0; j < Nside; ++j)
@@ -60,9 +64,9 @@ int main(int argc, char **argv)
             int idx = i + j * Nside;
             h_src[idx] = 273.f;
         }
-    // set physical top edge (row DIM) to 400 K
+    // set physical top edge (row 1) to 400 K
     for (int i = 1; i <= DIM; ++i)
-        h_src[i + DIM * Nside] = 400.f;
+        h_src[i + Nside] = 400.f;
 
     float *d_out, *d_in, *d_src;
     cudaMalloc(&d_out, N * sizeof(float));
@@ -81,8 +85,8 @@ int main(int argc, char **argv)
         // captrue the start time
         cudaEventRecord(start, 0);
 
-        copy_const_kernel<<<blocks, threads>>>(d_in, d_src, DIM);
         blend_kernel<<<blocks, threads>>>(d_out, d_in, DIM); // write "out" from "in"
+        copy_const_kernel<<<blocks, threads>>>(d_out, d_src, DIM);
 
         // get stop time, and display timing results
         cudaEventRecord(stop, 0);
@@ -95,9 +99,22 @@ int main(int argc, char **argv)
         d_out = d_in;
         d_in = tmp;
     }
-    printf("time per update: %3.5f ms\n", total_time / maxiter);
+    printf("gpu time per update: %3.5f ms\n", total_time / maxiter);
 
     cudaMemcpy(h_src, d_in, sizeof(float) * N, cudaMemcpyDeviceToHost);
+
+    FILE *fp = fopen("output.csv", "w");
+    for (int j = 1; j <= DIM; ++j) {
+        for (int i = 1; i <= DIM; ++i) {
+            int idx = i + j * Nside;
+            fprintf(fp, "%f", h_src[idx]);
+            if (i != DIM)
+                fprintf(fp, ",");
+        }
+        fprintf(fp, "\n");
+    }
+    fclose(fp);
+    printf("Result save to output.csv\n");
 
     free(h_src);
     cudaFree(d_src);
