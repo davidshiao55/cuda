@@ -51,6 +51,7 @@ int main(int argc, char **argv)
                 out[idx] = (left + right + back + front) * (1.0f / 4.0f);
             }
         }
+        float *tmp = out;
         // copy const
         for (int j = 1; j <= DIM; j++) {
             for (int i = 1; i <= DIM; i++) {
@@ -59,16 +60,15 @@ int main(int argc, char **argv)
                     out[idx] = src[idx];
             }
         }
-        float *tmp = out;
         out = in;
         in = tmp;
         clock_t cpu_end = clock();
         float cpu_time = 1000.0f * (cpu_end - cpu_start) / CLOCKS_PER_SEC;
         total_time += cpu_time;
     }
-    printf("cpu time per update: %3.5f ms\n", total_time / maxiter);
+    printf("avg time / iteration = %.6f  ms\n", total_time / maxiter);
 
-    FILE *fp = fopen("cpu_output.csv", "w");
+    FILE *fp = fopen("output_cpu.csv", "w");
     for (int j = 1; j <= DIM; ++j) {
         for (int i = 1; i <= DIM; ++i) {
             int idx = i + j * Nside;
@@ -80,6 +80,9 @@ int main(int argc, char **argv)
     }
     fclose(fp);
 
-    printf("Result save to cpu_output.csv\n");
+    free(src);
+    free(in);
+    free(out);
+    printf("Result save to output_cpu.csv\n");
     return 0;
 }

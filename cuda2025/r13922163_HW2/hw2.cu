@@ -102,8 +102,11 @@ int main(int argc, char **argv)
     printf("CPU elapsed time: %3.5f ms\n", cpu_time);
     printf("Speed up = %3.1f\n", cpu_time / gpu_time);
 
-    if (fabs(c_cpu - c) > 1e-5)
-        printf("Correct Result!!!\n");
+    if (fabs(c_cpu - c) < 1e-5 * fabs(c_cpu))
+        printf("Results match!\n");
+    else
+        printf("Mismatch! CPU %.8e  GPU %.8e\n", c_cpu, c);
+
     // free memory on GPU
     cudaFree(dev_a);
     cudaFree(dev_partial_c);
